@@ -14,14 +14,18 @@ contract  repay{
    //axs代币合约地址
     address public axstoken=0x43a3ADa420846079b6507f328eD2309BEDe54201;
   
-    //1usdt=>100axs
+    //代币单价 1usdt=>100axs  
     uint256 public presalePrice=0.01*10**18;
 
     //买多少代币
-    uint256 public presaleToken=0;
+   // uint256 public presaleToken=0;
 
     address[] public users;
     uint256[] public values;
+     
+     //购买代币余额
+    mapping(address => uint) public depositAmount;
+    
 
 
     //收到bnb 转给发送地址axs代币  注意代币的精度转化计算
@@ -31,21 +35,7 @@ contract  repay{
 
 
 
-
-//BNB
-//     function transferBNB(address to,uint256 amount)public{
-//         payable(to).transfer(amount);
-//     }
-
-
-
-// //时间戳
-//     function getTime() public view returns(uint256){
-//         return block.timestamp;
-//     }
-
-
-// //块号
+// 块号
 //     function getBlockNum() public view returns(uint256){
 //         return block.number;
 //     }
@@ -58,24 +48,24 @@ contract  repay{
 
 
 // //用户地址的中的代币余额
-      function getUserBanlance(address userAddress)public view returns(uint256){
-     //   require(block.timestamp>=1657378982,"over");
-        uint256 bal=IERC20(0x43a3ADa420846079b6507f328eD2309BEDe54201).balanceOf(userAddress);
-        return bal;
-    }
+    //   function getUserBanlance(address userAddress)public view returns(uint256){
+    //  //   require(block.timestamp>=1657378982,"over");
+    //     uint256 bal=IERC20(0x43a3ADa420846079b6507f328eD2309BEDe54201).balanceOf(userAddress);
+    //     return bal;
+    // }
    
 
   //预售   时间戳成功
-    function preasle(uint256 buynum)public{
-        uint256  paynum=buynum*presalePrice/10**18;
-       uint256 time=block.timestamp;
-       require(time>=1657525732&&time<=1657825999,"over"); 
+    function preasle(uint256 paynum)public{
+        uint256 time=block.timestamp;
+        require(time>=1657525732&&time<=1657825999,"over");
+        uint256  buynum=paynum/presalePrice*10**18;
+         
         IERC20(usdttoken).transferFrom(msg.sender,address(this),paynum);
-        presaleToken+=paynum;   
-        IERC20(axstoken).transfer(msg.sender,paynum);
-        users.push(msg.sender);
-        values.push(paynum);
+           
+        depositAmount[msg.sender] += buynum;
     }
+      
 
 
 
@@ -87,15 +77,16 @@ contract  repay{
         IERC20(usdttoken).transfer(0x529Aa0dB82defd69Af731220C5A7b34d72E48c9F,amount);
     }
 
-    function recaptionAXS()public returns(uint256){
+
+
+
+//取出代币
+    function recaptionAXS(uint256 amount)public{
         uint256 time=block.timestamp;
         require(time>1657825999,"over");
-        address account=msg.sender;
-        for(uint256 i=0;users[i]==account;i++){
-            uint256 amount=values[i];
-            IERC20(axstoken).transfer(account,amount);
-            break;
-        }
+       require(depositAmount[msg.sender] >= amount,"over");
+        depositAmount[msg.sender] -= amount;
+        IERC20(axstoken).transfer(msg.sender,amount);            
     }
   
 
