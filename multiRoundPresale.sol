@@ -10,19 +10,16 @@ contract  multiplePresales{
     address public usdtToken; //=0x8b5b1A58f67bD69e46E4E0F48A8B9BEF4f94B0a0;
     address public axsToken;  //=0x43a3ADa420846079b6507f328eD2309BEDe54201;
     address public ownerAddress;
-    uint256 public presalePrice;  //=0.01*10**18;     //代币单价 1usdt=>100axs  
-    uint256 public starTime;
-    uint256 public endTime;
-    uint256 public price;
+    uint256 public presalePrice;  //代币单价 
     uint256 public maxPayUsdt=100*10**18;   //最大购买金额100usdt
     uint256 public userwithDrawTime; //用户取款时间    
     address private withdrawAddress; //项目方取usdt地址；
-    mapping(address => uint) public _balances;
+    mapping(address => uint) public _balances;//查询购买代币余额
     mapping(address => uint) public userBuyTotleUsdt;  //用户累计购买多少usdt；
     mapping(address => address) public parents; // 记录上级  我的地址 => 我的上级地址
-    address[10] public parentAddr;
-
+    address[10] public parentAddr;   //邀请人地址
     address public firstAddress; // 合约发布第一邀请人
+
     modifier onlyOwner{
         require(msg.sender == ownerAddress,"isn't owner");
         _;   
@@ -52,9 +49,9 @@ contract  multiplePresales{
     }
 
 
-//设置预售轮次信息
+//设置预售轮次信息  直接以数组的形式传入：[结构体元素]
     function createPresaleInfo(PresaleInfo memory presaleInfo)public onlyOwner{
-        presaleInfos.push(presaleInfo);
+        presaleInfos.push(presaleInfo)；   
         //PresaleInfo memory presaleInfo = PresaleInfo(starTime,endTime,presalePrice);
     }
 
@@ -114,12 +111,12 @@ contract  multiplePresales{
         parentAddr=getParents();
        require(block.timestamp >=presaleInfo.starTime,"Presale has not started");         //检测预售是否开始
        require(block.timestamp <= presaleInfo.endTime,"Presale is over");                  //检测预售是否结束
-        require(payAmount <= maxPayUsdt,"Exceeding the available amount");                  //检测是否超过可买金额
-        userBuyTotleUsdt[msg.sender] += payAmount;
+        require(payAmount*10**18 <= maxPayUsdt,"Exceeding the available amount");                  //检测是否超过可买金额
+        userBuyTotleUsdt[msg.sender] += payAmount*10**18;
        require (userBuyTotleUsdt[msg.sender] <= presaleInfos.length*maxPayUsdt,"over");
         if (userBuyTotleUsdt[msg.sender] <= presaleInfos.length*maxPayUsdt){
-            IERC20(usdtToken).transferFrom(msg.sender,address(this),payAmount); 
-            presalePrice=price;//*10**18;
+            IERC20(usdtToken).transferFrom(msg.sender,address(this),payAmount*10**18); 
+            presalePrice=presaleInfo.price;//*10**18;
             uint256  getTokenNum = payAmount*10**18/presalePrice;
             _balances[msg.sender] += getTokenNum;
             for(uint8 i=0;i<10; i++){
@@ -176,7 +173,6 @@ contract  multiplePresales{
         IERC20(axsToken).transfer(msg.sender,amount);            
     }
   
-
 }
 
 
